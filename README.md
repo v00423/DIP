@@ -13,7 +13,7 @@ python global.py
 ```
 To run point guided transfomation, run:
 ```python
-point_guided.py
+python point_guided.py
 ```
 # Results
 ## Basic Transformation
