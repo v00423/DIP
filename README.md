@@ -23,7 +23,7 @@ train.py
 This video shows how to edit the image.
 
 
-Uploading poisson.mp4…
+【DIP第二次作业演示】 https://www.bilibili.com/video/BV1iuQGBxEio/?share_source=copy_web&vd_source=10e42189134f53514fe21036635ddf61
 
 
 The following pictures are the results.
