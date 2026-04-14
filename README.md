@@ -23,6 +23,8 @@ train.py
 This video shows how to edit the image.
 
 
+Uploading poisson.mp4…
+
 
 The following pictures are the results.
 ![poisson_1](https://github.com/user-attachments/assets/a9d2d163-36fc-4a14-8ec3-9af7ecac85a7)
