@@ -21,14 +21,19 @@ train.py
 # Results
 ## Poisson Image Editing
 This video shows how to edit the image.
-https://github.com/user-attachments/assets/c0123f5a-125e-46d1-9500-3f4e98962a52
+
+
+
 The following pictures are the results.
 ![poisson_1](https://github.com/user-attachments/assets/a9d2d163-36fc-4a14-8ec3-9af7ecac85a7)
+
 ![poisson_3](https://github.com/user-attachments/assets/7ca35352-df11-42d5-8d95-88298513d534)
 
 # Pix2Pix Image Editing
 ## Facades dataset
+
 For the facades dataset,the final laplacian loss converges and fluctuates around 0.36.
+
 Final epoch of the traning set image:
 <img width="768" height="256" alt="result_1" src="https://github.com/user-attachments/assets/f1e1d615-7603-48eb-a184-b3b765693dc4" />
 
@@ -54,7 +59,9 @@ Final epoch of the validation set image:
 The training set results are decent, with high matching accuracy, but not sharp enough; however, the validation set results are poor.
 
 ## Cityscapes dataset
+
 For the cityscapes dataset,the final laplacian loss converges and fluctuates around 0.10.
+
 Final epoch of the traning set image:
 <img width="768" height="256" alt="result_1" src="https://github.com/user-attachments/assets/e22035f6-9bd2-472a-a4ca-2a544944e19e" />
 
@@ -81,6 +88,9 @@ Same as facades, the training set results are decent, with high matching accurac
 
 # Acknowledgment
 Thanks for the Poisson algorithm and laplacian loss algorithm proposed by Prof.GUO's teaching Slides
-Also thanks for Prof.GUO for sharing the parameter settings for FCN networks and  detailed answers.
+
+Also thanks for Prof.GUO for sharing the parameter settings for FCN networks and  detailed answers.🌹🌹🌹
+
+
 
 
