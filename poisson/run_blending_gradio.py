@@ -1,401 +1,140 @@
-import gradio as gr
-from PIL import ImageDraw
-import numpy as np
-import torch
-
-# Initialize the polygon state
-def initialize_polygon():
-    """
-    Initializes the polygon state.
-
-    Returns:
-        dict: A dictionary with 'points' and 'closed' status.
-    """
-    return {'points': [], 'closed': False}
-
-# Add a point to the polygon when the user clicks on the image
-def add_point(img_original, polygon_state, evt: gr.SelectData):
-    """
-    Adds a point to the polygon based on user click event.
-
-    Args:
-        img_original (PIL.Image): The original image.
-        polygon_state (dict): The current state of the polygon.
-        evt (gr.SelectData): The click event data.
-
-    Returns:
-        tuple: Updated image with polygon and updated polygon state.
-    """
-    if polygon_state['closed']:
-        return img_original, polygon_state  # Do not add points if polygon is closed
-
-    x, y = evt.index
-    polygon_state['points'].append((x, y))
-
-    img_with_poly = img_original.copy()
-    draw = ImageDraw.Draw(img_with_poly)
-
-    # Draw lines between points
-    if len(polygon_state['points']) > 1:
-        draw.line(polygon_state['points'], fill='red', width=2)
-
-    # Draw points
-    for point in polygon_state['points']:
-        draw.ellipse((point[0]-3, point[1]-3, point[0]+3, point[1]+3), fill='blue')
-
-    return img_with_poly, polygon_state
-
-# Close the polygon when the user clicks the "Close Polygon" button
-def close_polygon(img_original, polygon_state):
-    """
-    Closes the polygon if there are at least three points.
-
-    Args:
-        img_original (PIL.Image): The original image.
-        polygon_state (dict): The current state of the polygon.
-
-    Returns:
-        tuple: Updated image with closed polygon and updated polygon state.
-    """
-    if not polygon_state['closed'] and len(polygon_state['points']) > 2:
-        polygon_state['closed'] = True
-        img_with_poly = img_original.copy()
-        draw = ImageDraw.Draw(img_with_poly)
-        draw.polygon(polygon_state['points'], outline='red')
-        return img_with_poly, polygon_state
-    else:
-        return img_original, polygon_state
-
-# Update the background image by drawing the shifted polygon on it
-def update_background(background_image_original, polygon_state, dx, dy):
-    """
-    Updates the background image by drawing the shifted polygon on it.
-
-    Args:
-        background_image_original (PIL.Image): The original background image.
-        polygon_state (dict): The current state of the polygon.
-        dx (int): Horizontal offset.
-        dy (int): Vertical offset.
-
-    Returns:
-        PIL.Image: The updated background image with the polygon overlay.
-    """
-    if background_image_original is None:
-        return None
-
-    if polygon_state['closed']:
-        img_with_poly = background_image_original.copy()
-        draw = ImageDraw.Draw(img_with_poly)
-        shifted_points = [(x + dx, y + dy) for x, y in polygon_state['points']]
-        draw.polygon(shifted_points, outline='red')
-        return img_with_poly
-    else:
-        return background_image_original
-
-# Create a binary mask from polygon points
-import gradio as gr
-from PIL import ImageDraw
-import numpy as np
-import torch
+import os
 import cv2
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from facades_dataset import FacadesDataset
+from FCN_network import FullyConvNetwork
+from torch.optim.lr_scheduler import StepLR
 
-# 创建mask
-def create_mask_from_points(points, img_h, img_w):
+def tensor_to_image(tensor):
     """
-    Args:
-        points (np.ndarray): 多边形点，形状为 (n, 2)。
-        img_h (int): 图像高度。
-        img_w (int): 图像宽度。
-
-    Returns:
-        np.ndarray: mask形状为 (img_h, img_w)。
-                    0 表示多边形外部。
-                    255 表示多边形内部。
-    """
-    # 创建全黑mask
-    mask = np.zeros((img_h, img_w), dtype=np.uint8)
-    
-    # 转换点格式为OpCV要求的 (n, 1, 2) 形状
-    pts = np.array(points, dtype=np.int32).reshape((-1, 1, 2))
-    
-    # 填充多边形内部为白色 (255)
-    cv2.fillPoly(mask, [pts], color=255)
-    
-    return mask
-
-
-# 计算拉普拉斯loss
-def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_mask):
-    """
-    Args:
-        foreground_img (torch.Tensor): 前景图像tensor 形状 (1, 3, H, W)。
-        foreground_mask (torch.Tensor): 前景mask tensor 形状 (1, 1, H, W)。
-        blended_img (torch.Tensor): 融合图像tensor 形状 (1, 3, H, W)。
-        background_mask (torch.Tensor): 背景mask tensor 形状 (1, 1, H, W)。
-
-    Returns:
-        torch.Tensor: 计算的拉普拉斯损失（标量）。
-    """
-    # 定义拉普拉斯算子核（3×3 卷积核）
-    laplacian_kernel = torch.tensor([
-        [0., -1., 0.],
-        [-1., 4., -1.],
-        [0., -1., 0.]
-    ], dtype=torch.float32)
-    
-    # 调整形状为 (1, 1, 3, 3)
-    laplacian_kernel = laplacian_kernel.unsqueeze(0).unsqueeze(0)
-    
-    # 复制 3 次用于 3 通道图像，形状变为 (3, 1, 3, 3)
-    laplacian_kernel = laplacian_kernel.repeat(3, 1, 1, 1)
-    
-    # 移到相同的计算设备
-    laplacian_kernel = laplacian_kernel.to(foreground_img.device)
-    
-    # 对前景图应用拉普拉斯卷积
-    foreground_laplacian = F.conv2d(foreground_img, laplacian_kernel, padding=1, groups=3)
-    
-    # 对融合图应用拉普拉斯卷积
-    blended_laplacian = F.conv2d(blended_img, laplacian_kernel, padding=1, groups=3)
-    
-    # 计算掩膜的乘积（损失计算区域）
-    combined_mask = foreground_mask * background_mask
-    
-    # 计算拉普拉斯差异的平方
-    laplacian_diff = (foreground_laplacian - blended_laplacian) ** 2
-    
-    # 计算掩膜区域内的平均loss
-    loss = torch.mean(laplacian_diff * combined_mask)
-    
-    return loss
-
-# Perform Poisson image blending
-def blending(foreground_image_original, background_image_original, dx, dy, polygon_state):
-    """
-    Blends the foreground polygon area onto the background image using Poisson blending.
+    Convert a PyTorch tensor to a NumPy array suitable for OpenCV.
 
     Args:
-        foreground_image_original (PIL.Image): The original foreground image.
-        background_image_original (PIL.Image): The original background image.
-        dx (int): Horizontal offset.
-        dy (int): Vertical offset.
-        polygon_state (dict): The current state of the polygon.
+        tensor (torch.Tensor): A tensor of shape (C, H, W).
 
     Returns:
-        np.ndarray: The blended image as a numpy array.
+        numpy.ndarray: An image array of shape (H, W, C) with values in [0, 255] and dtype uint8.
     """
-    if not polygon_state['closed'] or background_image_original is None or foreground_image_original is None:
-        return background_image_original  # Return original background if conditions are not met
+    image = tensor.cpu().detach().numpy()
+    image = np.transpose(image, (1, 2, 0))
+    image = (image + 1) / 2
+    image = np.clip(image, 0, 1)  # 防止数值越界
+    image = (image * 255).astype(np.uint8)
+    return image
 
-    # Convert images to numpy arrays
-    foreground_np = np.array(foreground_image_original)
-    background_np = np.array(background_image_original)
+def align_tensor_to_target(output_tensor, target_tensor):
+    """
+    Align output tensor spatial size to target tensor spatial size.
 
-    # Get polygon points and shift them by dx and dy
-    foreground_polygon_points = np.array(polygon_state['points']).astype(np.int64)
-    background_polygon_points = foreground_polygon_points + np.array([int(dx), int(dy)]).reshape(1, 2)
+    Args:
+        output_tensor (torch.Tensor): shape [B, C, H, W]
+        target_tensor (torch.Tensor): shape [B, C, Ht, Wt]
+    """
+    if output_tensor.shape[-2:] != target_tensor.shape[-2:]:
+        output_tensor = F.interpolate(
+            output_tensor,
+            size=target_tensor.shape[-2:],
+            mode='bilinear',
+            align_corners=False
+        )
+    return output_tensor
 
-    # Create masks from polygon points
-    foreground_mask = create_mask_from_points(foreground_polygon_points, foreground_np.shape[0], foreground_np.shape[1])
-    background_mask = create_mask_from_points(background_polygon_points, background_np.shape[0], background_np.shape[1])
+def save_images(inputs, targets, outputs, folder_name, epoch, num_images=5):
+    """
+    Save a set of input, target, and output images for visualization.
+    """
+    os.makedirs(f'{folder_name}/epoch_{epoch}', exist_ok=True)
+    b = inputs.size(0)
+    n = min(num_images, b)
 
-    # Convert numpy arrays to torch tensors
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'  # Using CPU will be slow
-    fg_img_tensor = torch.from_numpy(foreground_np).to(device).permute(2, 0, 1).unsqueeze(0).float() / 255.
-    bg_img_tensor = torch.from_numpy(background_np).to(device).permute(2, 0, 1).unsqueeze(0).float() / 255.
-    fg_mask_tensor = torch.from_numpy(foreground_mask).to(device).unsqueeze(0).unsqueeze(0).float() / 255.
-    bg_mask_tensor = torch.from_numpy(background_mask).to(device).unsqueeze(0).unsqueeze(0).float() / 255.
+    for i in range(n):
+        input_img_np = tensor_to_image(inputs[i])
+        target_img_np = tensor_to_image(targets[i])
+        output_img_np = tensor_to_image(outputs[i])
 
-    # Initialize blended image
-    blended_img = bg_img_tensor.clone()
-    mask_expanded = bg_mask_tensor.bool().expand(-1, 3, -1, -1)
-    blended_img[mask_expanded] = blended_img[mask_expanded] * 0.9 + fg_img_tensor[fg_mask_tensor.bool().expand(-1, 3, -1, -1)] * 0.1
-    blended_img.requires_grad = True
+        # numpy层再做一次保险对齐，避免hstack报错
+        h, w = target_img_np.shape[:2]
+        if input_img_np.shape[:2] != (h, w):
+            input_img_np = cv2.resize(input_img_np, (w, h), interpolation=cv2.INTER_LINEAR)
+        if output_img_np.shape[:2] != (h, w):
+            output_img_np = cv2.resize(output_img_np, (w, h), interpolation=cv2.INTER_LINEAR)
 
-    # Set up optimizer
-    optimizer = torch.optim.Adam([blended_img], lr=1e-2)
+        comparison = np.hstack((input_img_np, target_img_np, output_img_np))
 
-    # Optimization loop
-    iter_num = 5000
-    for step in range(iter_num):
-        blended_img_for_loss = blended_img.detach() * (1. - bg_mask_tensor) + blended_img * bg_mask_tensor  # Only blending in the mask region
+        # 如果你用cv2看图颜色不对，可改成 cv2.cvtColor(comparison, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(f'{folder_name}/epoch_{epoch}/result_{i + 1}.png', comparison)
 
-        loss = cal_laplacian_loss(fg_img_tensor, fg_mask_tensor, blended_img_for_loss, bg_mask_tensor)
+def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch, num_epochs):
+    model.train()
+
+    for i, (image_rgb, image_semantic) in enumerate(dataloader):
+        image_rgb = image_rgb.to(device)
+        image_semantic = image_semantic.to(device)
 
         optimizer.zero_grad()
+
+        outputs = model(image_rgb)
+        outputs = align_tensor_to_target(outputs, image_semantic)  # 关键：对齐尺寸后再算loss
+
+        if epoch % 5 == 0 and i == 0:
+            save_images(image_rgb, image_semantic, outputs, 'train_results', epoch)
+
+        loss = criterion(outputs, image_semantic)
         loss.backward()
         optimizer.step()
 
-        if step % 50 == 0:
-            print(f'Optimize step: {step}, Laplacian distance loss: {loss.item()}')
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], Loss: {loss.item():.4f}')
 
-        if step == int(iter_num*2/3): ### decrease learning rate at the half step
-            optimizer.param_groups[0]['lr'] *= 0.1
+def validate(model, dataloader, criterion, device, epoch, num_epochs):
+    model.eval()
+    val_loss = 0.0
 
-    # Convert result back to numpy array
-    result = torch.clamp(blended_img.detach(), 0, 1).cpu().permute(0, 2, 3, 1).squeeze().numpy() * 255
-    result = result.astype(np.uint8)
-    return result
+    with torch.no_grad():
+        for i, (image_rgb, image_semantic) in enumerate(dataloader):
+            image_rgb = image_rgb.to(device)
+            image_semantic = image_semantic.to(device)
 
-# Helper function to close the polygon and reset dx
-def close_polygon_and_reset_dx(img_original, polygon_state, dx, dy, background_image_original):
-    """
-    Closes the polygon, resets dx to 0, and updates the background image.
+            outputs = model(image_rgb)
+            outputs = align_tensor_to_target(outputs, image_semantic)  # 验证同样要对齐
 
-    Args:
-        img_original (PIL.Image): The original image.
-        polygon_state (dict): The current state of the polygon.
-        dx (int): Horizontal offset.
-        dy (int): Vertical offset.
-        background_image_original (PIL.Image): The original background image.
+            loss = criterion(outputs, image_semantic)
+            val_loss += loss.item()
 
-    Returns:
-        tuple: Updated image with polygon, updated polygon state, updated background image, and reset dx value.
-    """
-    # Close polygon
-    img_with_poly, updated_polygon_state = close_polygon(img_original, polygon_state)
+            if epoch % 5 == 0 and i == 0:
+                save_images(image_rgb, image_semantic, outputs, 'val_results', epoch)
 
-    # Reset dx value to 0
-    new_dx = gr.update(value=0)
+    avg_val_loss = val_loss / len(dataloader)
+    print(f'Epoch [{epoch + 1}/{num_epochs}], Validation Loss: {avg_val_loss:.4f}')
 
-    # Update background image
-    updated_background = update_background(background_image_original, updated_polygon_state, 0, dy)
-    return img_with_poly, updated_polygon_state, updated_background, new_dx
+def main():
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-# Gradio Interface
-with gr.Blocks(title="Poisson Image Blending", css="""
-    body {
-        background-color: #1e1e1e;
-        color: #ffffff;
-    }
-    .gr-button {
-        font-size: 1em;
-        padding: 0.75em 1.5em;
-        border-radius: 8px;
-        background-color: #6200ee;
-        color: #ffffff;
-        border: none;
-    }
-    .gr-button:hover {
-        background-color: #3700b3;
-    }
-    .gr-slider input[type=range] {
-        accent-color: #03dac6;
-    }
-    .gr-text, .gr-markdown {
-        font-size: 1.1em;
-    }
-    .gr-markdown h1, .gr-markdown h2, .gr-markdown h3 {
-        color: #bb86fc;
-    }
-    .gr-input, .gr-output {
-        background-color: #2c2c2c;
-        border: 1px solid #3c3c3c;
-    }
-""") as demo:
-    # Initialize states
-    polygon_state = gr.State(initialize_polygon())
-    background_image_original = gr.State(value=None)
+    train_dataset = FacadesDataset(list_file='train_list.txt')
+    val_dataset = FacadesDataset(list_file='val_list.txt')
 
-    # Title and description
-    gr.Markdown("<h1 style='text-align: center;'>Poisson Image Blending</h1>")
-    gr.Markdown("<p style='text-align: center; font-size: 1.2em;'>Blend a selected area from a foreground image onto a background image with adjustable positions.</p>")
+    train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=4)
 
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown("### Foreground Image")
-            foreground_image_original = gr.Image(
-                label="", type="pil", interactive=True, height=300
-            )
-            gr.Markdown(
-                "<p style='font-size: 0.9em;'>Upload the foreground image where the polygon will be selected.</p>"
-            )
-            gr.Markdown("### Foreground Image with Polygon")
-            foreground_image_with_polygon = gr.Image(
-                label="", type="pil", interactive=True, height=300
-            )
-            gr.Markdown(
-                "<p style='font-size: 0.9em;'>Click on the image to define the polygon area. After selecting at least three points, click <strong>Close Polygon</strong>.</p>"
-            )
-            close_polygon_button = gr.Button("Close Polygon")
-        with gr.Column():
-            gr.Markdown("### Background Image")
-            background_image = gr.Image(
-                label="", type="pil", interactive=True, height=300
-            )
-            gr.Markdown("<p style='font-size: 0.9em;'>Upload the background image where the polygon will be placed.</p>")
+    model = FullyConvNetwork().to(device)
+    criterion = nn.L1Loss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.5, 0.999))
+    scheduler = StepLR(optimizer, step_size=200, gamma=0.2)
 
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown("### Background Image with Polygon Overlay")
-            background_image_with_polygon = gr.Image(
-                label="", type="pil", height=500
-            )
-            gr.Markdown("<p style='font-size: 0.9em;'>Adjust the position of the polygon using the sliders below.</p>")
-        with gr.Column():
-            gr.Markdown("### Blended Image")
-            output_image = gr.Image(
-                label="", type="pil", height=500  # Increased height for larger display
-            )
+    num_epochs = 300
+    for epoch in range(num_epochs):
+        train_one_epoch(model, train_loader, optimizer, criterion, device, epoch, num_epochs)
+        validate(model, val_loader, criterion, device, epoch, num_epochs)
 
-    with gr.Row():
-        with gr.Column():
-            dx = gr.Slider(
-                label="Horizontal Offset", minimum=-500, maximum=500, step=1, value=0
-            )
-        with gr.Column():
-            dy = gr.Slider(
-                label="Vertical Offset", minimum=-500, maximum=500, step=1, value=0
-            )
-        blend_button = gr.Button("Blend Images")
+        scheduler.step()
 
-    # Interactions
+        if (epoch + 1) % 50 == 0:
+            os.makedirs('checkpoints', exist_ok=True)
+            torch.save(model.state_dict(), f'checkpoints/pix2pix_model_epoch_{epoch + 1}.pth')
 
-    # Copy the original image to the interactive image when uploaded
-    foreground_image_original.change(
-        fn=lambda img: img,
-        inputs=foreground_image_original,
-        outputs=foreground_image_with_polygon,
-    )
-
-    # User interacts with the image with polygon
-    foreground_image_with_polygon.select(
-        add_point,
-        inputs=[foreground_image_original, polygon_state],
-        outputs=[foreground_image_with_polygon, polygon_state],
-    )
-
-    close_polygon_button.click(
-        fn=close_polygon_and_reset_dx,
-        inputs=[foreground_image_original, polygon_state, dx, dy, background_image_original],
-        outputs=[foreground_image_with_polygon, polygon_state, background_image_with_polygon, dx],
-    )
-
-    background_image.change(
-        fn=lambda img: img,
-        inputs=background_image,
-        outputs=background_image_original,
-    )
-
-    # Update background image when dx or dy changes
-    dx.change(
-        fn=update_background,
-        inputs=[background_image_original, polygon_state, dx, dy],
-        outputs=background_image_with_polygon,
-    )
-    dy.change(
-        fn=update_background,
-        inputs=[background_image_original, polygon_state, dx, dy],
-        outputs=background_image_with_polygon,
-    )
-
-    # Blend images when button is clicked
-    blend_button.click(
-        fn=blending,
-        inputs=[foreground_image_original, background_image_original, dx, dy, polygon_state],
-        outputs=output_image,
-    )
-
-# Launch the Gradio app
-demo.launch()
+if __name__ == '__main__':
+    main()
