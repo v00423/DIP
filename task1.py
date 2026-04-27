@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Task 1: Bundle Adjustment with PyTorch
-读取风格与仓库 visualize_data.py 保持一致：
-- points2d = np.load(".../points2d.npz")
-- obs = points2d[key]  # (N,3): x,y,visibility
-- pts = obs[:, :2]
-- vis = obs[:, 2].astype(bool)
-"""
-
 import os
 import math
 import argparse
@@ -19,17 +9,10 @@ from pytorch3d.transforms import euler_angles_to_matrix
 
 
 def load_observations_like_visualize_data(data_dir):
-    """
-    与 visualize_data.py 风格统一的数据读取：
-    返回:
-      obs_all: (V, N, 2) float32
-      vis_all: (V, N) bool
-      view_keys: [view_000, ..., view_049]
-    """
-    points2d = np.load(f"{data_dir}/points2d.npz")  # 与仓库写法一致
+   
+    points2d = np.load(f"{data_dir}/points2d.npz") 
 
-    # 与仓库命名一致：view_000 ~ view_049
-    # 用排序保证顺序稳定
+    # view_000 ~ view_049用排序保证顺序稳定
     view_keys = sorted(list(points2d.keys()))
 
     obs_list = []
@@ -69,15 +52,14 @@ class BundleAdjustmentModel(nn.Module):
 
         # 焦距初始化: f = H / (2*tan(fov/2))
         init_f = self.H / (2.0 * math.tan(math.radians(init_fov_deg) / 2.0))
-        # 数值稳定：softplus(x)≈x (当x很大时)，所以大于阈值时直接用 init_f
         if init_f > 20:
             f_raw_init = init_f
         else:
-            f_raw_init = math.log(math.expm1(init_f))  # 比 log(exp(x)-1) 更稳定
+            f_raw_init = math.log(math.expm1(init_f)) 
 
         self.f_raw = nn.Parameter(torch.tensor([f_raw_init], dtype=torch.float32, device=device))
 
-        # 每个视角的欧拉角和位移
+        # 每个视角的欧Euler角和位移
         self.euler = nn.Parameter(torch.zeros((V, 3), dtype=torch.float32, device=device))
         t0 = torch.zeros((V, 3), dtype=torch.float32, device=device)
         t0[:, 2] = -init_depth
@@ -107,7 +89,6 @@ class BundleAdjustmentModel(nn.Module):
         Z = Xc[..., 2]
         Z = torch.where(Z.abs() < 1e-8, torch.full_like(Z, 1e-8), Z)
 
-        # README hint 指定投影
         u = -self.f * (X / Z) + self.cx
         v = self.f * (Y / Z) + self.cy
         pred = torch.stack([u, v], dim=-1)  # (V,N,2)
@@ -141,7 +122,6 @@ def main():
     os.makedirs(args.out_dir, exist_ok=True)
     print(f"[Info] device = {args.device}")
 
-    # 与 visualize_data.py 风格统一读取
     obs_np, vis_np, view_keys = load_observations_like_visualize_data(args.data_dir)
     colors_np = np.load(f"{args.data_dir}/points3d_colors.npy").astype(np.float32)
 
