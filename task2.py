@@ -23,7 +23,7 @@ def get_colmap_executable():
         return ["colmap"]
 
     raise FileNotFoundError(
-        f"在 {COLMAP_ROOT} 及 PATH 中都找不到 colmap 可执行文件。"
+        f" colmap读取失败 "
     )
 
 def run_cmd(cmd):
@@ -90,7 +90,7 @@ def main():
         "--output_path", str(dense_dir / "fused.ply"),
     ])
 
-    # 可选：把稀疏模型转成 ply，方便 MeshLab 直接看
+    # 把稀疏模型转成 ply 格式
     print("=== Optional: Convert Sparse Model to PLY ===")
     run_cmd(colmap + [
         "model_converter",
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     try:
         main()
     except subprocess.CalledProcessError as e:
-        print(f"\n[ERROR] 命令执行失败，返回码: {e.returncode}")
+        print(f"\n[ERROR] 脚本没跑起来")
         sys.exit(e.returncode)
     except Exception as e:
         print(f"\n[ERROR] {e}")
