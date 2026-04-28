@@ -2,9 +2,11 @@
 This repository is WeiLin Liu's implementation of Assignment_03 of DIP.
 <img width="974" height="822" alt="image" src="https://github.com/user-attachments/assets/6c20aeee-42f0-4474-ae57-13d170614f99" />
 
-To install requirements:
+To install requirements:（After install CONDA（Anaconda or Miniconda））
 ```python
-python -m pip install -r requirements.txt
+python conda install numpy matplotlib
+python conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+python -m pip install pytorch3d
 ```
 # Running
 To complete task1:Budle Adjustment with Pytorch3D , run
