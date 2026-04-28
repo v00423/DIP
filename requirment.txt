@@ -1,0 +1,4 @@
+numpy
+torch
+PyTorch 3D
+matplotlib
