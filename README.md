@@ -35,6 +35,7 @@ First, download colmap and add it to  PATH.
 <img width="409" height="305" alt="image" src="https://github.com/user-attachments/assets/18717e99-1ed3-4783-8934-24aa931c415c" />
 The following pictures show the final effect of Sparse Reconstruction and Dense Reconstruction.
 If needed, download fused.ply and sparse.ply to have detailed imformation.
+
 Sparse Reconstruction：
 <img width="699" height="658" alt="image" src="https://github.com/user-attachments/assets/31ac50a6-73ec-415f-9f56-04d42387130f" />
 <img width="641" height="618" alt="image" src="https://github.com/user-attachments/assets/558695bb-a377-42a8-9a87-1105d6bbbf2c" />
