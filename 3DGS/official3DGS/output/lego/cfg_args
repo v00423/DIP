@@ -1,0 +1,1 @@
+Namespace(data_device='cuda', depths='', eval=True, images='images', model_path='output/lego', resolution=-1, sh_degree=3, source_path='/root/off3dgs/gaussian-splatting-main/lego/lego', train_test_exp=False, white_background=False)
