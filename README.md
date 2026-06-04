@@ -164,59 +164,73 @@ However, when training with the official 3DGS, an RTX 4080 with 32GB of VRAM onl
 ### Rendering quality
 
 **(1)Differences in Color Representation Capabilities**
+
 The simplified version only learns RGB (gaussian_model.py uses 3-channel logit parameters for color). 
 The official version uses SH and progressively increases the degree (sh_degree=3, and oneupSHdegree() during training).
 
 **(2)Differences in Loss Functions**
+
 The simplified version only uses L1.
 The official version uses L1 + SSIM (can be fused_ssim) + optional depthwise regularization.
 
 **(3)Resolution/Sampling Differences**
+
 The simplified version defaults to downsample_factor=8, and training images are scaled down first.
 The official version loads according to camera resolution, only performing controlled scaling on large images.
 
 **(4)Exposure/Color Compensation Differences**
+
 The official version supports the per-image exposure parameter in training and rendering.
 The simplified version has no corresponding mechanism.
 
 **(5)Conclusion**
+
 The official approach systematically improves reconstruction quality through stronger parameterization (SH), stronger supervision (SSIM/Depth), imaging consistency (Exposure), and higher effective resolution, rather than simply relying on "more training."
 
 ### Training speed
 
 **(1)Differences in Rendering Computation Paths**
+
 The simplified version explicitly constructs the (N,H,W) Gaussian response in PyTorch, performing inverse/det/einsum/cumprod.
 The official version places both forward and reverse directions into the CUDA op.
 
 **(2)Differences in Rasterization Strategy**
+
 The simplified version uses a "full Gaussian × full pixel" calculation.
 The official version uses tile/binning + sorting + parallel blending per tile.
 
 **(3)Visibility and Early Termination**
+
 The official documentation includes frustum culling, radius filtering, and early alpha termination.
 The simplified version only uses a depth threshold mask, but still calculates a large number of invalid values ​​first.
 
 **(4)Sparse Optimization and Fusion Loss**
+
 The official documentation offers SparseGaussianAdam (updated by visibility points) , and supports fused SSIM . The simplified version is a standard Adam full-parameter update. 
 Tile + sort makes memory access more contiguous and thread utilization higher; forward and backward shared buffers (geom/binning/img buffer) reduce the overhead of repeated construction.
 
 **(5)Conclusion**
+
 The essence of the official speedup is: algorithm-level pruning (visibility/bugging) + engineering-level fusion (CUDA forward and backward) + optimizer-level sparse updates, rather than simply adjusting the learning rate.
 
 ### Memory usage
 
 **(1)Intermediate Tensor Shape Differences**
+
 The simplified version explicitly preserves large tensors such as dx(N,H,W,2), gaussian(N,H,W), and alphas(N,H,W).
 The official version processes tensors by tile, uses shared memory for mini-batch caching, and does not construct a global N×H×W.
 
 **(2)Parameter Storage Compression and Visibility-Driven**
+
 The official version uses a 6-parameter symmetric form for internal covariance.
 The official training process prune the points. Points can be sparsely updated based on visibility.
 
 **(3)Reverse caching strategy**
+
 The official version only saves necessary buffers (geom/binning/img) for backward.
 The simplified version relies on general autograd to track a large number of dense intermediate values.
 
 **(4)Conclusion**
+
 The key to saving VRAM in the official version is: avoiding fully expanded intermediate tensors + tiled local working set + sparse visibility updates + dynamic point control (densify/prune).
 
