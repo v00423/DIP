@@ -54,11 +54,13 @@ data/
 
 ### Simplified 3DGS Results
 
+<p align="center">
 <img src="./data/lego/checkpoints/debug_images/epoch_0000.png" alt="Debug1">
 
 <img src="./data/lego/checkpoints/debug_images/epoch_0062.png" alt="Debug1">
 
 <img src="./data/lego/checkpoints/debug_images/epoch_0192.png" alt="Debug1">
+</p>
 
 <video src="./data/lego/checkpoints/debug_rendering.mp4" width="100%" controls></video>
 
