@@ -117,11 +117,11 @@ which is pretty convenient for the next task.
 The leftside fig is original figs,the rightside fig is rendered figs.
 
 <p align="center">
-<img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00000.png" alt="original figs1" width="50%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00000.png" alt="rendered figs1" width="50%" >
+<img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00000.png" alt="original figs1" width="25%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00000.png" alt="rendered figs1" width="25%" >
 </p>
 
 <p align="center">
-<img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00010.png" alt="original figs2" width="50%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00010.png" alt="rendered figs2" width="50%" >
+<img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00010.png" alt="original figs2" width="25%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00010.png" alt="rendered figs2" width="25%" >
 </p>
 
 As can be seen, the point cloud and images rendered using the official 3DGS are of extremely high quality, perfectly displaying numerous details of the original image (such as the bumps on the LEGO brick version). Its performance is much higher than the simplified 3DGS implementation in Task 2.
