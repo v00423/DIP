@@ -62,7 +62,9 @@ data/
 <img src="./data/lego/checkpoints/debug_images/epoch_0192.png" alt="Debug1">
 </p>
 
-<a href="./data/lego/checkpoints/debug_rendering.mp4">点此观看演示视频</a>
+<p align="center">
+<a href="./data/lego/checkpoints/debug_rendering.mp4">Click here to watch Debug video</a>
+</p>
 
 As you can see, as the number of epochs increases (the number of training iterations increases), the clarity of the rendered image gradually increases, becoming more and more faithful to the original image.
 
