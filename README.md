@@ -106,17 +106,23 @@ which is pretty convenient for the next task.
 ```
 ### Output:point cloud
 
-<img src="./official3DGS/output/lego/point_cloud/pointcloud1.png" alt="Pointcloud1">
+<p align="center">
+<img src="./official3DGS/output/lego/point_cloud/pointcloud1.png" alt="Pointcloud1" width="80%">
 
-<img src="./official3DGS/output/lego/point_cloud/pointcloud2.png" alt="Pointcloud2">
+<img src="./official3DGS/output/lego/point_cloud/pointcloud2.png" alt="Pointcloud2" width="90%">
+</p>
 
 ### Rendered figs
 
 The leftside fig is original figs,the rightside fig is rendered figs.
 
+<p align="center">
 <img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00000.png" alt="original figs1" width="50%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00000.png" alt="rendered figs1" width="50%" >
+</p>
 
+<p align="center">
 <img src="./official3DGS/output/lego/figs/test/ours_30000/gt/00010.png" alt="original figs2" width="50%" > <img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00010.png" alt="rendered figs2" width="50%" >
+</p>
 
 As can be seen, the point cloud and images rendered using the official 3DGS are of extremely high quality, perfectly displaying numerous details of the original image (such as the bumps on the LEGO brick version). Its performance is much higher than the simplified 3DGS implementation in Task 2.
 
@@ -124,7 +130,9 @@ As can be seen, the point cloud and images rendered using the official 3DGS are 
 
 ## I. Rendering quality
 
+<p align="center">
 <img src="./data/lego/checkpoints/debug_images/epoch_0192.png" alt="Debug1" width="50%" ><img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00010.png" alt="rendered figs2" width="25%" >
+</p>
 
 Clearly, the rendering quality of the official 3DGS is much higher than that of the simplified 3DGS. It is more detailed in its reproduction of details and its processing of high-resolution images, and it can be trained without cropping.
 
@@ -132,15 +140,22 @@ Clearly, the rendering quality of the official 3DGS is much higher than that of 
 
 Simplified 3DGS training requires about an hour to iterate through all images in the dataset, while according to the saved training log, the official 3DGS only takes about three minutes to complete all training and provide high-quality results.
 
+<p align="center">
 check[official3DGSTraninglog](official3DGS/log.txt)
+</p>
+
 
 ## III. Memory usage
 
+<p align="center">
 <img src="./Figs/simplified.png" alt="simplified" >
+</p>
 
 When training with a simplified version of 3DGS, an RTX 5060 Ti with 8GB of VRAM used approximately 3GB of VRAM. 
 
+<p align="center">
 <img src="./Figs/official.png" alt="official" >
+</p>
 
 However, when training with the official 3DGS, an RTX 4080 with 32GB of VRAM only used about 1GB of VRAM.
 
