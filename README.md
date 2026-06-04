@@ -40,7 +40,7 @@ data/
 └──lego/images/    # 100 张 multi-view 渲染图像
 ```
 
-# Results and Discusion
+# Results and Discussion
 
 ## Task 1: Structure-from-Motion with COLMAP
 
