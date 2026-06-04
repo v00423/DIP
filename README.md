@@ -32,7 +32,7 @@ python render_3dgs_mv.py \
     --num_frames 240 --fps 30
 ```
 
-## To finish Task 3 (Oficial 3D Gaussian Splatting) please check this website.[官方 3DGS](https://github.com/graphdeco-inria/gaussian-splatting)
+## To finish Task 3 (Official 3D Gaussian Splatting) please check this website.[官方 3DGS](https://github.com/graphdeco-inria/gaussian-splatting)
 
 ## Data
 ```
