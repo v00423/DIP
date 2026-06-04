@@ -161,4 +161,17 @@ However, when training with the official 3DGS, an RTX 4080 with 32GB of VRAM onl
 
 # IV. Discussion on different performance characteristics
 
+**Rendering quality**
+
+(1)Differences in Color Representation Capabilities
+The simplified version only learns RGB (gaussian_model.py uses 3-channel logit parameters for color) [/tmp/workspace/v00423/DIP/gaussian_model.py:183-189]
+The official version uses SH and progressively increases the degree (sh_degree=3, and oneupSHdegree() during training) [.../arguments/__init__.py:49, .../train.py:93-95, .../scene/gaussian_model.py:145-147]
+
+(2)Differences in Loss Functions
+The simplified version only uses L1 [/tmp/workspace/v00423/DIP/train.py:188]
+The official version uses L1 + SSIM (can be fused_ssim) + optional depthwise regularization [.../train.py:118-137, ...] .../submodules/fused-ssim/fused_ssim/__init__.py:11-41] Resolution/Sampling Differences: The simplified version defaults to downsample_factor=8, and training images are scaled down first [/tmp/workspace/v00423/DIP/data_utils.py:110,157] The official version loads according to camera resolution, only performing controlled scaling on large images [.../utils/camera_utils.py:43-62] Exposure/Color Compensation Differences: The official version supports the per-image exposure parameter in training and rendering [.../scene/gaussian_model.py:173-176, .../gaussian_renderer/__init__.py:112-116] The simplified version has no corresponding mechanism.
+
+Conclusion
+The official approach systematically improves reconstruction quality through stronger parameterization (SH), stronger supervision (SSIM/Depth), imaging consistency (Exposure), and higher effective resolution, rather than simply relying on "more training."
+
 
