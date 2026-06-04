@@ -80,6 +80,11 @@ lego/
 ```
 which is pretty convenient for the next task.
 
+## Render a Multi-view Video
+<p align="center">
+<a href="./data/lego/render_mv.mp4">Click here to watch rendered video</a>
+</p>
+
 ### Task 1 and Task 2 are run based on the following Python environment:
 ```
     Python 3.11.15(Windows 11)
