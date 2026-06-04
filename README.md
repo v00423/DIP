@@ -63,7 +63,7 @@ data/
 </p>
 
 <p align="center">
-[Click here to watch rendered videio](data/lego/checkpoints/debug_rendering.mp4)
+[Click here to watch rendered videio](./data/lego/checkpoints/debug_rendering.mp4)
 </p>
 
 As you can see, as the number of epochs increases (the number of training iterations increases), the clarity of the rendered image gradually increases, becoming more and more faithful to the original image.
