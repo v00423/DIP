@@ -45,16 +45,9 @@ data/
 ## Task 1: Structure-from-Motion with COLMAP
 
 ### Projection and Debug figs
-<p align="center">
-        <img src="./data/lego/projections/r_1.png" alt="Projection1">
-</p>
 
 <p align="center">
-        <img src="./data/lego/projections/r_16.png" alt="Projection2">
-</p>
-
-<p align="center">
-        <img src="./data/lego/projections/r_59.png" alt="Projection3">
+<img src="./data/lego/projections/r_1.png" alt="Projection1"> <img src="./data/lego/projections/r_16.png" alt="Projection2"><img src="./data/lego/projections/r_59.png" alt="Projection3">
 </p>
 
 ## Task 2: Simplified 3D Gaussian Splatting
