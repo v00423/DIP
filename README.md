@@ -1,17 +1,17 @@
 # Assignment 4 - Implement Simplified 3D Gaussian Splatting
 
-### This repositories is WeiLin Liu's implement of of Assignment_04 of DIP.
+## This repositories is WeiLin Liu's implement of of Assignment_04 of DIP.
 
 
 
-### Requirements
+# Requirements
 To install requirements:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### Running
+# Running
 
 ## To finish Task 1 (Structure-from-Motion with COLMAP),run:
 
@@ -40,11 +40,11 @@ data/
 └──lego/images/    # 100 张 multi-view 渲染图像
 ```
 
-### Results and Discusion
+# Results and Discusion
 
 ## Task 1: Structure-from-Motion with COLMAP
 
-# Projection and Debug figs
+### Projection and Debug figs
 
 <img src="./data/lego/projections/r_1.png" alt="Projection1">
 
@@ -55,7 +55,7 @@ data/
 
 ## Task 2: Simplified 3D Gaussian Splatting
 
-# Simplified 3DGS Results
+### Simplified 3DGS Results
 
 <img src="./data/lego/checkpoints/debug_images/epoch_0000.png" alt="Debug1">
 
@@ -79,7 +79,7 @@ lego/
 ```
 which is pretty convenient for the next task.
 
-# Task 1 and Task 2 are run based on the following Python environment:
+### Task 1 and Task 2 are run based on the following Python environment:
 ```
     Python 3.11.15(Windows 11)
     Pytorch 2.11.0
@@ -90,7 +90,7 @@ which is pretty convenient for the next task.
 
 ## Task 3: Compare with the Official 3DGS Implementation
 
-# This task is run based on the following Python environment:
+### This task is run based on the following Python environment:
 ```
     Python  3.8(ubuntu)
     PyTorch  2.0.0
@@ -98,13 +98,13 @@ which is pretty convenient for the next task.
     Device_CPU = " AMD EPYC 7T83 64-Core Processor "
     Device_GPU = " NVIDIA RTX 4080 32G "
 ```
-# Output:point cloud
+### Output:point cloud
 
 <img src="./official3DGS/output/lego/point_cloud/pointcloud1.png" alt="Pointcloud1">
 
 <img src="./official3DGS/output/lego/point_cloud/pointcloud2.png" alt="Pointcloud2">
 
-# Rendered figs
+### Rendered figs
 
 The leftside fig is original figs,the rightside fig is rendered figs.
 
@@ -114,21 +114,21 @@ The leftside fig is original figs,the rightside fig is rendered figs.
 
 As can be seen, the point cloud and images rendered using the official 3DGS are of extremely high quality, perfectly displaying numerous details of the original image (such as the bumps on the LEGO brick version). Its performance is much higher than the simplified 3DGS implementation in Task 2.
 
-## Code performance comparison
+# Code performance comparison
 
-# I. Rendering quality
+## I. Rendering quality
 
 <img src="./data/lego/checkpoints/debug_images/epoch_0192.png" alt="Debug1" width="50%" ><img src="./official3DGS/output/lego/figs/test/ours_30000/renders/00010.png" alt="rendered figs2" width="25%" >
 
 Clearly, the rendering quality of the official 3DGS is much higher than that of the simplified 3DGS. It is more detailed in its reproduction of details and its processing of high-resolution images, and it can be trained without cropping.
 
-# II. Training speed
+## II. Training speed
 
 Simplified 3DGS training requires about an hour to iterate through all images in the dataset, while according to the saved training log, the official 3DGS only takes about three minutes to complete all training and provide high-quality results.
 
 check[official3DGSTraninglog](official3DGS/log.txt)
 
-# III. Memory usage
+## III. Memory usage
 
 <img src="./Figs/simplified.png" alt="simplified" >
 
