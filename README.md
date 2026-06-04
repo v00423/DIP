@@ -107,9 +107,9 @@ which is pretty convenient for the next task.
 ### Output:point cloud
 
 <p align="center">
-<img src="./official3DGS/output/lego/point_cloud/pointcloud1.png" alt="Pointcloud1" width="80%">
+<img src="./official3DGS/output/lego/point_cloud/pointcloud1.png" alt="Pointcloud1" width="40%">
 
-<img src="./official3DGS/output/lego/point_cloud/pointcloud2.png" alt="Pointcloud2" width="80%">
+<img src="./official3DGS/output/lego/point_cloud/pointcloud2.png" alt="Pointcloud2" width="40%">
 </p>
 
 ### Rendered figs
